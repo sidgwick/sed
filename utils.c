@@ -45,47 +45,43 @@ char *myname;
 #include <stdarg.h>
 
 /* Print an error message and exit */
-void
-panic(char *str, ...)
-{
-	va_list iggy;
+void panic(char *str, ...) {
+    va_list iggy;
 
-	fprintf(stderr,"%s: ",myname);
-	va_start(iggy,str);
+    fprintf(stderr, "%s: ", myname);
+    va_start(iggy, str);
 #ifdef HAVE_VPRINTF
-	vfprintf(stderr,str,iggy);
+    vfprintf(stderr, str, iggy);
 #else
 #ifdef HAVE_DOPRNT
-	_doprnt(str,&iggy,stderr);
+    _doprnt(str, &iggy, stderr);
 #endif
 #endif
-	va_end(iggy);
-	putc('\n',stderr);
-	exit(4);
+    va_end(iggy);
+    putc('\n', stderr);
+    exit(4);
 }
 
 #else
 #include <varargs.h>
 
 void
-panic(str,va_alist)
-char *str;
-va_dcl
-{
-	va_list iggy;
+    panic(str, va_alist) char *str;
+va_dcl {
+    va_list iggy;
 
-	fprintf(stderr,"%s: ",myname);
-	va_start(iggy);
+    fprintf(stderr, "%s: ", myname);
+    va_start(iggy);
 #ifdef HAVE_VPRINTF
-	vfprintf(stderr,str,iggy);
+    vfprintf(stderr, str, iggy);
 #else
 #ifdef HAVE_DOPRNT
-	_doprnt(str,&iggy,stderr);
+    _doprnt(str, &iggy, stderr);
 #endif
 #endif
-	va_end(iggy);
-	putc('\n',stderr);
-	exit(4);
+    va_end(iggy);
+    putc('\n', stderr);
+    exit(4);
 }
 
 #endif
@@ -96,221 +92,214 @@ va_dcl
 #define N_FILE 32
 
 struct id {
-	FILE *fp;
-	char *name;
+    FILE *fp;
+    char *name;
 };
 
 static struct id __id_s[N_FILE];
 
 /* Internal routine to get a filename from __id_s */
 char *
-__fp_name(fp)
-FILE *fp;
+    __fp_name(fp)
+        FILE *fp;
 {
-	int n;
+    int n;
 
-	for(n=0;n<N_FILE;n++) {
-		if(__id_s[n].fp==fp)
-			return __id_s[n].name;
-	}
-	return "{Unknown file pointer}";
+    for (n = 0; n < N_FILE; n++) {
+        if (__id_s[n].fp == fp)
+            return __id_s[n].name;
+    }
+    return "{Unknown file pointer}";
 }
 
 /* Panic on failing fopen */
 FILE *
-ck_fopen(name,mode)
-char *name;
+    ck_fopen(name, mode) char *name;
 char *mode;
 {
-	FILE	*ret;
-	int	n;
+    FILE *ret;
+    int n;
 
-	ret=fopen(name,mode);
-	if(ret==(FILE *)0)
-		panic("Couldn't open file %s",name);
-	for(n=0;n<N_FILE;n++) {
-		if(ret==__id_s[n].fp) {
-			free((VOID *)__id_s[n].name);
-			__id_s[n].name=(char *)ck_malloc(strlen(name)+1);
-			strcpy(__id_s[n].name,name);
-			break;
-		}
-	}
-	if(n==N_FILE) {
-		for(n=0;n<N_FILE;n++)
-			if(__id_s[n].fp==(FILE *)0)
-				break;
-		if(n==N_FILE)
-			panic("Internal error: too many files open");
-		__id_s[n].fp=ret;
-		__id_s[n].name=(char *)ck_malloc(strlen(name)+1);
-		strcpy(__id_s[n].name,name);
-	}
-	return ret;
+    ret = fopen(name, mode);
+    if (ret == (FILE *)0)
+        panic("Couldn't open file %s", name);
+    for (n = 0; n < N_FILE; n++) {
+        if (ret == __id_s[n].fp) {
+            free((VOID *)__id_s[n].name);
+            __id_s[n].name = (char *)ck_malloc(strlen(name) + 1);
+            strcpy(__id_s[n].name, name);
+            break;
+        }
+    }
+    if (n == N_FILE) {
+        for (n = 0; n < N_FILE; n++)
+            if (__id_s[n].fp == (FILE *)0)
+                break;
+        if (n == N_FILE)
+            panic("Internal error: too many files open");
+        __id_s[n].fp = ret;
+        __id_s[n].name = (char *)ck_malloc(strlen(name) + 1);
+        strcpy(__id_s[n].name, name);
+    }
+    return ret;
 }
 
 /* Panic on failing fwrite */
 void
-ck_fwrite(ptr,size,nmemb,stream)
-char *ptr;
-int size,nmemb;
+    ck_fwrite(ptr, size, nmemb, stream) char *ptr;
+int size, nmemb;
 FILE *stream;
 {
-	if(fwrite(ptr,size,nmemb,stream)!=nmemb)
-		panic("couldn't write %d items to %s",nmemb,__fp_name(stream));
+    if (fwrite(ptr, size, nmemb, stream) != nmemb)
+        panic("couldn't write %d items to %s", nmemb, __fp_name(stream));
 }
 
 /* Panic on failing fclose */
 void
-ck_fclose(stream)
-FILE *stream;
+    ck_fclose(stream)
+        FILE *stream;
 {
-	if(fclose(stream)==EOF)
-		panic("Couldn't close %s",__fp_name(stream));
+    if (fclose(stream) == EOF)
+        panic("Couldn't close %s", __fp_name(stream));
 }
 
 /* Panic on failing malloc */
 VOID *
-ck_malloc(size)
-int size;
+    ck_malloc(size) int size;
 {
-	VOID *ret;
+    VOID *ret;
 
-	if(!size)
-		size++;
-	ret=malloc(size);
-	if(ret==(VOID *)0)
-		panic("Couldn't allocate memory");
-	return ret;
+    if (!size)
+        size++;
+    ret = malloc(size);
+    if (ret == (VOID *)0)
+        panic("Couldn't allocate memory");
+    return ret;
 }
 
 /* Panic on failing malloc */
 VOID *
-xmalloc(size)
-int size;
+    xmalloc(size) int size;
 {
-  return ck_malloc (size);
+    return ck_malloc(size);
 }
 
 /* Panic on failing realloc */
 VOID *
-ck_realloc(ptr,size)
-VOID *ptr;
+    ck_realloc(ptr, size)
+        VOID *ptr;
 int size;
 {
-	VOID *ret;
+    VOID *ret;
 
-	ret=realloc(ptr,size);
-	if(ret==(VOID *)0)
-		panic("Couldn't re-allocate memory");
-	return ret;
+    ret = realloc(ptr, size);
+    if (ret == (VOID *)0)
+        panic("Couldn't re-allocate memory");
+    return ret;
 }
 
 /* Return a malloc()'d copy of a string */
 char *
-ck_strdup(str)
-char *str;
+    ck_strdup(str) char *str;
 {
-	char *ret;
+    char *ret;
 
-	ret=(char *)ck_malloc(strlen(str)+2);
-	strcpy(ret,str);
-	return ret;
+    ret = (char *)ck_malloc(strlen(str) + 2);
+    strcpy(ret, str);
+    return ret;
 }
-
 
 /* Implement a variable sized buffer of 'stuff'.  We don't know what it is,
    nor do we care, as long as it doesn't mind being aligned by malloc. */
 
 struct buffer {
-	int	allocated;
-	int	length;
-	char	*b;
+    int allocated;
+    int length;
+    char *b;
 };
 
 #define MIN_ALLOCATE 50
 
 VOID *
-init_buffer()
-{
-	struct buffer *b;
+init_buffer() {
+    struct buffer *b;
 
-	b=(struct buffer *)ck_malloc(sizeof(struct buffer));
-	b->allocated=MIN_ALLOCATE;
-	b->b=(char *)ck_malloc(MIN_ALLOCATE);
-	b->length=0;
-	return (VOID *)b;
+    b = (struct buffer *)ck_malloc(sizeof(struct buffer));
+    b->allocated = MIN_ALLOCATE;
+    b->b = (char *)ck_malloc(MIN_ALLOCATE);
+    b->length = 0;
+    return (VOID *)b;
 }
 
 void
-flush_buffer(bb)
-VOID *bb;
+    flush_buffer(bb)
+        VOID *bb;
 {
-	struct buffer *b;
+    struct buffer *b;
 
-	b=(struct buffer *)bb;
-	free(b->b);
-	b->b=0;
-	b->allocated=0;
-	b->length=0;
-	free(b);
+    b = (struct buffer *)bb;
+    free(b->b);
+    b->b = 0;
+    b->allocated = 0;
+    b->length = 0;
+    free(b);
 }
 
 int
-size_buffer(b)
-VOID *b;
+    size_buffer(b)
+        VOID *b;
 {
-	struct buffer *bb;
+    struct buffer *bb;
 
-	bb=(struct buffer *)b;
-	return bb->length;
+    bb = (struct buffer *)b;
+    return bb->length;
 }
 
 void
-add_buffer(bb,p,n)
-VOID *bb;
+    add_buffer(bb, p, n)
+        VOID *bb;
 char *p;
 int n;
 {
-	struct buffer *b;
-	int x;
-	char * cp;
+    struct buffer *b;
+    int x;
+    char *cp;
 
-	b=(struct buffer *)bb;
-	if(b->length+n>b->allocated) {
-		b->allocated*=2;
-		b->b=(char *)ck_realloc(b->b,b->allocated);
-	}
-	
-	x = n;
-	cp = b->b + b->length;
-	while (x--)
-	  *cp++ = *p++;
-	b->length+=n;
+    b = (struct buffer *)bb;
+    if (b->length + n > b->allocated) {
+        b->allocated *= 2;
+        b->b = (char *)ck_realloc(b->b, b->allocated);
+    }
+
+    x = n;
+    cp = b->b + b->length;
+    while (x--)
+        *cp++ = *p++;
+    b->length += n;
 }
 
 void
-add1_buffer(bb,ch)
-VOID *bb;
+    add1_buffer(bb, ch)
+        VOID *bb;
 int ch;
 {
-	struct buffer *b;
+    struct buffer *b;
 
-	b=(struct buffer *)bb;
-	if(b->length+1>b->allocated) {
-		b->allocated*=2;
-		b->b=(char *)ck_realloc(b->b,b->allocated);
-	}
-	b->b[b->length]=ch;
-	b->length++;
+    b = (struct buffer *)bb;
+    if (b->length + 1 > b->allocated) {
+        b->allocated *= 2;
+        b->b = (char *)ck_realloc(b->b, b->allocated);
+    }
+    b->b[b->length] = ch;
+    b->length++;
 }
 
 char *
-get_buffer(bb)
-VOID *bb;
+    get_buffer(bb)
+        VOID *bb;
 {
-	struct buffer *b;
+    struct buffer *b;
 
-	b=(struct buffer *)bb;
-	return b->b;
+    b = (struct buffer *)bb;
+    return b->b;
 }
