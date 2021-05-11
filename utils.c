@@ -99,23 +99,21 @@ struct id {
 static struct id __id_s[N_FILE];
 
 /* Internal routine to get a filename from __id_s */
-char *
-    __fp_name(fp)
-        FILE *fp;
+char * __fp_name(FILE *fp)
 {
     int n;
 
     for (n = 0; n < N_FILE; n++) {
-        if (__id_s[n].fp == fp)
+        if (__id_s[n].fp == fp) {
             return __id_s[n].name;
+        }
     }
+
     return "{Unknown file pointer}";
 }
 
 /* Panic on failing fopen */
-FILE *
-    ck_fopen(name, mode) char *name;
-char *mode;
+FILE *ck_fopen(char *name, char *mode)
 {
     FILE *ret;
     int n;
@@ -145,27 +143,21 @@ char *mode;
 }
 
 /* Panic on failing fwrite */
-void
-    ck_fwrite(ptr, size, nmemb, stream) char *ptr;
-int size, nmemb;
-FILE *stream;
+void ck_fwrite(char *ptr, int size, int nmemb, FILE *stream)
 {
     if (fwrite(ptr, size, nmemb, stream) != nmemb)
         panic("couldn't write %d items to %s", nmemb, __fp_name(stream));
 }
 
 /* Panic on failing fclose */
-void
-    ck_fclose(stream)
-        FILE *stream;
+void ck_fclose(FILE *stream)
 {
     if (fclose(stream) == EOF)
         panic("Couldn't close %s", __fp_name(stream));
 }
 
 /* Panic on failing malloc */
-VOID *
-    ck_malloc(size) int size;
+VOID *ck_malloc(int size)
 {
     VOID *ret;
 
@@ -178,17 +170,13 @@ VOID *
 }
 
 /* Panic on failing malloc */
-VOID *
-    xmalloc(size) int size;
+VOID *xmalloc(int size)
 {
     return ck_malloc(size);
 }
 
 /* Panic on failing realloc */
-VOID *
-    ck_realloc(ptr, size)
-        VOID *ptr;
-int size;
+VOID *ck_realloc(VOID *ptr, int size)
 {
     VOID *ret;
 
@@ -220,8 +208,7 @@ struct buffer {
 
 #define MIN_ALLOCATE 50
 
-VOID *
-init_buffer() {
+VOID * init_buffer() {
     struct buffer *b;
 
     b = (struct buffer *)ck_malloc(sizeof(struct buffer));
@@ -231,9 +218,7 @@ init_buffer() {
     return (VOID *)b;
 }
 
-void
-    flush_buffer(bb)
-        VOID *bb;
+void flush_buffer(VOID *bb)
 {
     struct buffer *b;
 
@@ -245,9 +230,8 @@ void
     free(b);
 }
 
-int
-    size_buffer(b)
-        VOID *b;
+/* 查看当前缓存的大小 */
+int size_buffer(VOID *b)
 {
     struct buffer *bb;
 
@@ -255,11 +239,7 @@ int
     return bb->length;
 }
 
-void
-    add_buffer(bb, p, n)
-        VOID *bb;
-char *p;
-int n;
+void add_buffer(VOID *bb, char *p, int n)
 {
     struct buffer *b;
     int x;
@@ -273,15 +253,14 @@ int n;
 
     x = n;
     cp = b->b + b->length;
-    while (x--)
+    while (x--) {
         *cp++ = *p++;
+    }
+
     b->length += n;
 }
 
-void
-    add1_buffer(bb, ch)
-        VOID *bb;
-int ch;
+void add1_buffer(VOID *bb, int ch)
 {
     struct buffer *b;
 
@@ -290,13 +269,12 @@ int ch;
         b->allocated *= 2;
         b->b = (char *)ck_realloc(b->b, b->allocated);
     }
+
     b->b[b->length] = ch;
     b->length++;
 }
 
-char *
-    get_buffer(bb)
-        VOID *bb;
+char *get_buffer(VOID *bb)
 {
     struct buffer *b;
 
