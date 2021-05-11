@@ -43,27 +43,11 @@
 #include <strings.h>
 #endif
 
-#ifndef HAVE_BCOPY
-#ifdef HAVE_MEMCPY
-#define bcopy(FROM, TO, LEN) memcpy(TO, FROM, LEN)
-#else
-void
-    bcopy(from, to, len) char *from;
-char *to;
-int len;
-{
-    if (from < to) {
-        from += len - 1;
-        to += len - 1;
-        while (len--)
-            *to-- = *from--;
-    } else
-        while (len--)
-            *to++ = *from++;
-}
 
-#endif
-#endif
+#include <errno.h>
+extern int errno;
+
+#define bcopy(FROM, TO, LEN) memcpy(TO, FROM, LEN)
 
 char *version_string = "GNU sed version 1.18";
 
@@ -333,19 +317,17 @@ static char BAD_EOF[] = "Unexpected End-of-file";
 static char NO_REGEX[] = "No previous regular expression";
 static char NO_COMMAND[] = "Missing command";
 
-static struct option longopts[] =
-    {
-        {"expression", 1, NULL, 'e'},
-        {"file", 1, NULL, 'f'},
-        {"quiet", 0, NULL, 'n'},
-        {"silent", 0, NULL, 'n'},
-        {"version", 0, NULL, 'V'},
-        {"help", 0, NULL, 'h'},
-        {NULL, 0, NULL, 0}};
+static struct option longopts[] = {
+    {"expression", 1, NULL, 'e'},
+    {"file", 1, NULL, 'f'},
+    {"quiet", 0, NULL, 'n'},
+    {"silent", 0, NULL, 'n'},
+    {"version", 0, NULL, 'V'},
+    {"help", 0, NULL, 'h'},
+    {NULL, 0, NULL, 0}
+};
 
-void
-    main(argc, argv) int argc;
-char **argv;
+void main(int argc, char **argv)
 {
     int opt;
     char *e_strings = NULL;
@@ -449,8 +431,7 @@ void close_files() {
 
 /* 'str' is a string (from the command line) that contains a sed command.
    Compile the command, and add it to the end of 'the_program' */
-void
-    compile_string(str) char *str;
+void compile_string(char *str)
 {
     prog_file = 0;
     prog_line = 0;
@@ -461,8 +442,7 @@ void
 
 /* 'str' is the name of a file containing sed commands.  Read them in
    and add them to the end of 'the_program' */
-void
-    compile_file(str) char *str;
+void compile_file(char *str)
 {
     int ch;
 
@@ -490,9 +470,7 @@ void
 
 /* Read a program (or a subprogram within '{' '}' pairs) in and store
    the compiled form in *'vector'  Return a pointer to the new vector.  */
-struct vector *
-    compile_program(vector, open_line) struct vector *vector;
-int open_line;
+struct vector *compile_program(struct vector *vector, int open_line)
 {
     struct sed_cmd *cur_cmd;
     int ch = 0;
@@ -606,14 +584,9 @@ int open_line;
             case '{':
                 cur_cmd->cmd = ch;
                 program_depth++;
-#if 0
-	  while ((ch = inchar ()) != EOF && ch != '\n')
-	    if (!isblank (ch))
-	      bad_prog (LINE_JUNK);
-#endif
                 cur_cmd->x.sub = compile_program((struct vector *)0, prog_line);
                 /* FOO JF is this the right thing to do?
-			   almost.  don't forget a return addr.  -t */
+                   almost.  don't forget a return addr.  -t */
                 cur_cmd->x.sub->return_v = vector;
                 cur_cmd->x.sub->return_i = vector->v_length - 1;
                 break;
@@ -801,8 +774,7 @@ int open_line;
 }
 
 /* Complain about a programming error and exit. */
-void
-    bad_prog(why) char *why;
+void bad_prog(char *why)
 {
     if (prog_line > 0)
         fprintf(stderr, "%s: file %s line %d: %s\n",
@@ -838,8 +810,7 @@ int inchar() {
 
 /* unget 'ch' so the next call to inchar will return it.  'ch' must not be
    EOF or anything nasty like that. */
-void
-    savchar(ch) int ch;
+void savchar(int ch)
 {
     if (ch == EOF)
         return;
@@ -855,8 +826,7 @@ void
    return non-zero and store the resulting address in *'addr'.
    If the input doesn't look like an address read nothing
    and return zero. */
-int
-    compile_address(addr) struct addr *addr;
+int compile_address(struct addr *addr)
 {
     int ch;
     int num;
@@ -896,8 +866,7 @@ int
     return 0;
 }
 
-void
-    compile_regex(slash) int slash;
+void compile_regex(int slash)
 {
     VOID *b;
     int ch;
@@ -984,10 +953,7 @@ void
 /* Store a label (or label reference) created by a ':', 'b', or 't'
    comand so that the jump to/from the lable can be backpatched after
    compilation is complete */
-struct sed_label *
-    setup_jump(list, cmd, vec) struct sed_label *list;
-struct sed_cmd *cmd;
-struct vector *vec;
+struct sed_label *setup_jump(struct sed_label *list, struct sed_cmd *cmd, struct vector *vec)
 {
     struct sed_label *tmp;
     VOID *b;
@@ -1015,8 +981,7 @@ struct vector *vec;
 /* read in a filename for a 'r', 'w', or 's///w' command, and
    update the internal structure about files.  The file is
    opened if it isn't already open. */
-FILE *
-    compile_filename(readit) int readit;
+FILE * compile_filename(int readit)
 {
     char *file_name;
     int n;
@@ -1057,25 +1022,15 @@ FILE *
 }
 
 /* Read a file and apply the compiled script to it. */
-void
-    read_file(name) char *name;
+void read_file(char *name)
 {
     if (*name == '-' && name[1] == '\0')
         input_file = stdin;
     else {
         input_file = fopen(name, "r");
         if (input_file == 0) {
-            extern int errno;
-            extern char *sys_errlist[];
-            extern int sys_nerr;
-
-            char *ptr;
-
-            ptr = ((errno >= 0 && errno < sys_nerr)
-                       ? sys_errlist[errno]
-                       : "Unknown error code");
             bad_input++;
-            fprintf(stderr, "%s: can't read %s: %s\n", myname, name, ptr);
+            fprintf(stderr, "%s: can't read %s: %s\n", myname, name, strerror(errno));
             return;
         }
     }
@@ -1093,31 +1048,25 @@ void
     ck_fclose(input_file);
 }
 
-static char *
-    eol_pos(str, len) char *str;
-int len;
+static char *eol_pos(char *str, int len)
 {
     while (len--)
         if (*str++ == '\n')
             return --str;
+
     return --str;
 }
 
-static void
-    chr_copy(dest, src, len) char *dest;
-char *src;
-int len;
+static void chr_copy(char *dest, char *src, int len)
 {
     while (len--)
         *dest++ = *src++;
 }
 
 /* Execute the program 'vec' on the current input line. */
-static struct re_registers regs =
-    {0, 0, 0};
+static struct re_registers regs = {0, 0, 0};
 
-void
-    execute_program(vec) struct vector *vec;
+void execute_program(struct vector *vec)
 {
     struct sed_cmd *cur_cmd;
     int n;
@@ -1515,8 +1464,7 @@ restart:
 
 /* Return non-zero if the current line matches the address
    pointed to by 'addr'. */
-int
-    match_address(addr) struct addr *addr;
+int match_address(struct addr *addr)
 {
     switch (addr->addr_type) {
         case addr_is_null:
@@ -1640,9 +1588,7 @@ void append_pattern_space() {
 /* Copy the contents of the line 'from' into the line 'to'.
    This destroys the old contents of 'to'.  It will still work
    if the line 'from' contains nulls. */
-void
-    line_copy(from, to) struct line *from,
-    *to;
+void line_copy(struct line *from, struct line *to)
 {
     if (from->length > to->alloc) {
         to->alloc = from->length;
@@ -1654,9 +1600,7 @@ void
 
 /* Append the contents of the line 'from' to the line 'to'.
    This routine will work even if the line 'from' contains nulls */
-void
-    line_append(from, to) struct line *from,
-    *to;
+void line_append(struct line *from, struct line *to)
 {
     if (from->length > (to->alloc - to->length)) {
         to->alloc += from->length;
@@ -1669,10 +1613,7 @@ void
 /* Append 'length' bytes from 'string' to the line 'to'
    This routine *will* append bytes with nulls in them, without
    failing. */
-void
-    str_append(to, string, length) struct line *to;
-char *string;
-int length;
+void str_append(struct line *to, char *string, int length)
 {
     if (length > to->alloc - to->length) {
         to->alloc += length;
@@ -1682,8 +1623,7 @@ int length;
     to->length += length;
 }
 
-void
-    usage(status) int status;
+void usage(int status)
 {
     fprintf(status ? stderr : stdout,
             "\
