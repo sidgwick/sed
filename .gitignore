@@ -1,0 +1,7 @@
+*.o
+sed
+.idea
+Makefile
+config.status
+e_script.sed
+xxxx
