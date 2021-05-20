@@ -780,9 +780,7 @@ reg_syntax_t re_syntax_options = RE_SYNTAX_EMACS;
    The argument SYNTAX is a bit mask comprised of the various bits
    defined in regex.h.  We return the old syntax.  */
 
-reg_syntax_t
-    re_set_syntax(syntax)
-        reg_syntax_t syntax;
+reg_syntax_t re_set_syntax(reg_syntax_t syntax)
 {
     reg_syntax_t ret = re_syntax_options;
 
@@ -793,25 +791,24 @@ reg_syntax_t
 /* This table gives an error message for each of the error codes listed
    in regex.h.  Obviously the order here has to be same as there.  */
 
-static const char *re_error_msg[] =
-    {
-        NULL,                                   /* REG_NOERROR */
-        "No match",                             /* REG_NOMATCH */
-        "Invalid regular expression",           /* REG_BADPAT */
-        "Invalid collation character",          /* REG_ECOLLATE */
-        "Invalid character class name",         /* REG_ECTYPE */
-        "Trailing backslash",                   /* REG_EESCAPE */
-        "Invalid back reference",               /* REG_ESUBREG */
-        "Unmatched [ or [^",                    /* REG_EBRACK */
-        "Unmatched ( or \\(",                   /* REG_EPAREN */
-        "Unmatched \\{",                        /* REG_EBRACE */
-        "Invalid content of \\{\\}",            /* REG_BADBR */
-        "Invalid range end",                    /* REG_ERANGE */
-        "Memory exhausted",                     /* REG_ESPACE */
-        "Invalid preceding regular expression", /* REG_BADRPT */
-        "Premature end of regular expression",  /* REG_EEND */
-        "Regular expression too big",           /* REG_ESIZE */
-        "Unmatched ) or \\)",                   /* REG_ERPAREN */
+static const char *re_error_msg[] = {
+    NULL,                                   /* REG_NOERROR */
+    "No match",                             /* REG_NOMATCH */
+    "Invalid regular expression",           /* REG_BADPAT */
+    "Invalid collation character",          /* REG_ECOLLATE */
+    "Invalid character class name",         /* REG_ECTYPE */
+    "Trailing backslash",                   /* REG_EESCAPE */
+    "Invalid back reference",               /* REG_ESUBREG */
+    "Unmatched [ or [^",                    /* REG_EBRACK */
+    "Unmatched ( or \\(",                   /* REG_EPAREN */
+    "Unmatched \\{",                        /* REG_EBRACE */
+    "Invalid content of \\{\\}",            /* REG_BADBR */
+    "Invalid range end",                    /* REG_ERANGE */
+    "Memory exhausted",                     /* REG_ESPACE */
+    "Invalid preceding regular expression", /* REG_BADRPT */
+    "Premature end of regular expression",  /* REG_EEND */
+    "Regular expression too big",           /* REG_ESIZE */
+    "Unmatched ) or \\)",                   /* REG_ERPAREN */
 };
 
 /* Subroutine declarations and macros for regex_compile.  */
